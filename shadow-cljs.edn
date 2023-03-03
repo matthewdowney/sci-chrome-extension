@@ -1,11 +1,14 @@
 ;; shadow-cljs configuration
-{:source-paths
- ["src/dev"
-  "src/main"
-  "src/test"]
-
- :dependencies
- []
-
+{:deps {:aliases [:shadow]} ; use deps.edn with the :shadow alias
  :builds
- {}}
+ {:app
+  {:target :browser
+   :output-dir "public/js"
+   :asset-path "/js"
+   :modules {:main {:entries [com.mjdowney.scx]}}
+   :devtools {:repl-init-ns com.mjdowney.scx
+              :http-root "public"
+              :http-port 8020
+              :preloads [devtools.preload hashp.core]}
+   #_#_:compiler-options {:optimizations :advanced
+                          :output-feature-set :es-next}}}}
