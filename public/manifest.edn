@@ -12,5 +12,6 @@
 
  ;; Execution
  :permissions      [:alarms :notifications :storage]
- :background       {:service_worker "js/service_worker.js" :type "module"}
+ :omnibox          {:keyword :scx}
+ :background       {:service_worker "js/service_worker.js" :type :module}
  :action           {:default_title "SCX" :default_popup "popup.html"}}

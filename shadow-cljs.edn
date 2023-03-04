@@ -6,6 +6,7 @@
   {:target     :esm
    :output-dir "public/js"
    :runtime    :custom
+   :build-hooks [(com.mjdowney.scx.build/manifest)] ; write the manifest.json file
    :modules    {:shared         {:entries []} ; leave empty to let the compiler figure it out
                 :service_worker {:init-fn    com.mjdowney.scx.service-worker/init
                                  :depends-on #{:shared}}
