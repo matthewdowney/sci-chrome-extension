@@ -1,0 +1,14 @@
+{:tasks
+ {manifest
+  {:doc      "Build the manifest.json file."
+   :requires ([cheshire.core :as json])
+   :task     (let [data (read-string (slurp "public/manifest.edn"))]
+               (spit "public/manifest.json"
+                 (json/generate-string data {:pretty true})))}
+  dev
+  {:doc      "Launch the dev environment."
+   :requires ([babashka.fs :as fs])
+   :task     (do
+               (fs/delete-tree "public/js")
+               (run 'manifest)
+               (shell "npx shadow-cljs watch :app"))}}}
