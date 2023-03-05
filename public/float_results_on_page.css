@@ -1,7 +1,11 @@
-#com\.mjdowney\.scx\.float-results-on-page {
-	all: unset;
-}
-
-#com\.mjdowney\.scx\.float-results-on-page > * {
+#com\.mjdowney\.scx\.float-results-on-page,
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *) :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *),
+#com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *) :not(svg > *)
+{
 	all: unset;
 }
