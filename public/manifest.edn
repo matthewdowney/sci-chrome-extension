@@ -2,7 +2,7 @@
 
  ;; Description
  :name                     "SCX"
- :description              "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)"
+ :description              "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)."
  :version                  "1.0"
  :icons                    {"16"  "images/icon16.png"
                             "19"  "images/icon19.png"
@@ -11,11 +11,8 @@
                             "128" "images/icon128.png"}
 
  ;; Execution
- :permissions              [:activeTab :scripting]
- #_#_:content_security_policy  {:extension_pages          "script-src 'self'; object-src 'self';"
-                            #_#_:sandbox "allow-scripts"
-                            :web_accessible_resources "script.js" ;; TODO
-                            :host                     ["*://*/*"]}
+ :permissions              [:activeTab  ; for sending messages to the active tab
+                            :scripting] ; for loading content scripts to receive msgs
 
  ; This content script proxies to the js/float_results_on_page.js (which might
  ; further require other js/* scripts, and therefore needs full access in web
@@ -23,6 +20,7 @@
  :content_scripts          [{:matches ["<all_urls>"] :js ["float_results_on_page.js"]}]
  :web_accessible_resources [{:matches ["<all_urls>"] :resources ["js/*"]}]
 
+ ; Allow the service worker to intercept the URL bar as soon as the "sci "
+ ; prefix is entered
  :omnibox                  {:keyword :sci}
- :background               {:service_worker "js/service_worker.js" :type :module}
- :action                   {:default_title "SCX" :default_popup "popup.html"}}
+ :background               {:service_worker "js/service_worker.js" :type :module}}

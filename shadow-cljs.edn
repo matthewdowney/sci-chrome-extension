@@ -1,4 +1,4 @@
-;; use deps.edn with the :shadow alias
+; use deps.edn with the :shadow alias
 {:deps {:aliases [:shadow]}
 
  :builds
@@ -12,6 +12,4 @@
                  :service_worker        {:init-fn    com.mjdowney.scx.service-worker/init
                                          :depends-on #{:shared}}
                  :float_results_on_page {:init-fn    com.mjdowney.scx.float-results-on-page/init
-                                         :depends-on #{:shared}}
-                 :popup                 {:init-fn    com.mjdowney.scx.popup/init
                                          :depends-on #{:shared}}}}}}
