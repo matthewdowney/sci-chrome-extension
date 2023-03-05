@@ -1,21 +1,28 @@
-{:manifest_version        3
+{:manifest_version         3
 
  ;; Description
- :name                    "SCX"
- :description             "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)"
- :version                 "1.0"
- :icons                   {"16"  "images/icon16.png"
-                           "19"  "images/icon19.png"
-                           "38"  "images/icon38.png"
-                           "48"  "images/icon48.png"
-                           "128" "images/icon128.png"}
+ :name                     "SCX"
+ :description              "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)"
+ :version                  "1.0"
+ :icons                    {"16"  "images/icon16.png"
+                            "19"  "images/icon19.png"
+                            "38"  "images/icon38.png"
+                            "48"  "images/icon48.png"
+                            "128" "images/icon128.png"}
 
  ;; Execution
- :permissions             [:activeTab :scripting]
- :content_security_policy {:extension_pages          "script-src 'self'; object-src 'self';"
-                           #_#_:sandbox                  "allow-scripts"
-                           :web_accessible_resources "script.js" ;; TODO
-                           :host                     ["*://*/*"]}
- :omnibox                 {:keyword :sci}
- :background              {:service_worker "js/service_worker.js" :type :module}
- :action                  {:default_title "SCX" :default_popup "popup.html"}}
+ :permissions              [:activeTab :scripting]
+ #_#_:content_security_policy  {:extension_pages          "script-src 'self'; object-src 'self';"
+                            #_#_:sandbox "allow-scripts"
+                            :web_accessible_resources "script.js" ;; TODO
+                            :host                     ["*://*/*"]}
+
+ ; This content script proxies to the js/float_results_on_page.js (which might
+ ; further require other js/* scripts, and therefore needs full access in web
+ ; accessible resources).
+ :content_scripts          [{:matches ["<all_urls>"] :js ["float_results_on_page.js"]}]
+ :web_accessible_resources [{:matches ["<all_urls>"] :resources ["js/*"]}]
+
+ :omnibox                  {:keyword :sci}
+ :background               {:service_worker "js/service_worker.js" :type :module}
+ :action                   {:default_title "SCX" :default_popup "popup.html"}}

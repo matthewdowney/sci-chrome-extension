@@ -76,7 +76,10 @@
 (defn get-this-tab [] (.then (js/chrome.tabs.query #js {:active true :currentWindow true}) first))
 (defn send-message [tab-id msg] (js/chrome.tabs.sendMessage tab-id msg))
 (defn inject-script [tab-id path]
-  (let [data (clj->js {:target {:tabId tab-id} :files [path]})]
+  (let [data (clj->js
+               {:target {:tabId tab-id}
+                :files [path]
+                :world "MAIN"})]
     (js/console.log "Injecting script: " data)
     (js/chrome.scripting.executeScript data)))
 
@@ -88,7 +91,8 @@
         (js/console.log "Got tab:" tab)
         (if (and tab (not (string/starts-with? (.-url tab) "chrome://")))
           (do
-            (<p! (inject-script (.-id tab) "test.js"))
+
+            #_(<p! (inject-script (.-id tab) "js/float_results_on_page.js"))
             (send-message (.-id tab) #js {:type "msg" :data text}))
           ;; TODO: Open custom HTML here, since the target page can't be modified
           (js/console.log "Ignoring tab because we cannot inject JS here...")))
@@ -96,8 +100,6 @@
         ;; TODO: Open custom HTML here, since the target page can't be modified
         (js/console.log err)))))
 
-;; TODO: Inject a script when a result is selected, set some var in the window,
-;;       and don't inject on subsequent calls if this var is truthy
 ;; TODO: Generate the script from CLJS, make it accept messages from this NS and
 ;;       display the SCI results
 ;; TODO: Does this work more nicely with promesa?

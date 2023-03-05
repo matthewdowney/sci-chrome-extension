@@ -1,14 +1,17 @@
-;; shadow-cljs configuration
-{:deps {:aliases [:shadow]} ; use deps.edn with the :shadow alias
+;; use deps.edn with the :shadow alias
+{:deps {:aliases [:shadow]}
 
  :builds
  {:app
-  {:target     :esm
-   :output-dir "public/js"
-   :runtime    :custom
-   :build-hooks [(com.mjdowney.scx.build/manifest)] ; write the manifest.json file
-   :modules    {:shared         {:entries []} ; leave empty to let the compiler figure it out
-                :service_worker {:init-fn    com.mjdowney.scx.service-worker/init
-                                 :depends-on #{:shared}}
-                :popup          {:init-fn    com.mjdowney.scx.popup/init
-                                 :depends-on #{:shared}}}}}}
+  {:target      :esm
+   :output-dir  "public/js"
+   :runtime     :custom
+   ; write the manifest.json file
+   :build-hooks [(com.mjdowney.scx.build/manifest)]
+   :modules     {:shared                {:entries []} ; leave empty to let the compiler figure it out
+                 :service_worker        {:init-fn    com.mjdowney.scx.service-worker/init
+                                         :depends-on #{:shared}}
+                 :float_results_on_page {:init-fn    com.mjdowney.scx.float-results-on-page/init
+                                         :depends-on #{:shared}}
+                 :popup                 {:init-fn    com.mjdowney.scx.popup/init
+                                         :depends-on #{:shared}}}}}}
