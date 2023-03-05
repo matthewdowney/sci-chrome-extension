@@ -1,17 +1,21 @@
-{:manifest_version 3
+{:manifest_version        3
 
  ;; Description
- :name             "SCX"
- :description      "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)"
- :version          "1.0"
- :icons            {"16"  "images/icon16.png"
-                    "19"  "images/icon19.png"
-                    "38"  "images/icon38.png"
-                    "48"  "images/icon48.png"
-                    "128" "images/icon128.png"}
+ :name                    "SCX"
+ :description             "A Chrome extension to evaluate code entered into the URL bar (the omnibox) with the Small Clojure Interpreter (SCI)"
+ :version                 "1.0"
+ :icons                   {"16"  "images/icon16.png"
+                           "19"  "images/icon19.png"
+                           "38"  "images/icon38.png"
+                           "48"  "images/icon48.png"
+                           "128" "images/icon128.png"}
 
  ;; Execution
- :permissions      [:alarms :notifications :storage]
- :omnibox          {:keyword :scx}
- :background       {:service_worker "js/service_worker.js" :type :module}
- :action           {:default_title "SCX" :default_popup "popup.html"}}
+ :permissions             [:activeTab :scripting]
+ :content_security_policy {:extension_pages          "script-src 'self'; object-src 'self';"
+                           #_#_:sandbox                  "allow-scripts"
+                           :web_accessible_resources "script.js" ;; TODO
+                           :host                     ["*://*/*"]}
+ :omnibox                 {:keyword :sci}
+ :background              {:service_worker "js/service_worker.js" :type :module}
+ :action                  {:default_title "SCX" :default_popup "popup.html"}}
