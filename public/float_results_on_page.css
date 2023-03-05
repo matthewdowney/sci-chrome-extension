@@ -1,0 +1,7 @@
+#com\.mjdowney\.scx\.float-results-on-page {
+	all: unset;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page > * {
+	all: unset;
+}

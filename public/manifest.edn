@@ -17,8 +17,8 @@
  ; This content script proxies to the js/float_results_on_page.js (which might
  ; further require other js/* scripts, and therefore needs full access in web
  ; accessible resources).
- :content_scripts          [{:matches ["<all_urls>"] :js ["float_results_on_page.js"]}]
- :web_accessible_resources [{:matches ["<all_urls>"] :resources ["js/*"]}]
+ :content_scripts          [{:matches ["<all_urls>"] :js  ["float_results_on_page.js"]}]
+ :web_accessible_resources [{:matches ["<all_urls>"] :resources ["js/*" "float_results_on_page.css"]}]
 
  ; Allow the service worker to intercept the URL bar as soon as the "sci "
  ; prefix is entered
