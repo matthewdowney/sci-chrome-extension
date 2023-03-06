@@ -1,3 +1,7 @@
+;; TODO: Clean up this NS, especially the styling, & factor out react components
+;; TODO: Input box within the result box itself, so not all entry has to be via
+;;       the URL bar
+;; TODO: Capture stdout too
 (ns com.mjdowney.scx.float-results-on-page
   (:require [clojure.string :as string]
             [com.mjdowney.scx.sci :as sci]
@@ -11,7 +15,7 @@
 (defn escape-xml [s] (string/escape s xml-escapes))
 
 (def ^:const app-id "com.mjdowney.scx.float-results-on-page")
-(defonce state (r/atom {:msgs [] :window-state :normal}))
+(defonce state (r/atom {:msgs [] :window-state :hidden}))
 
 (defn app []
   (let [window-width (r/atom 300)
@@ -38,7 +42,10 @@
             :onMouseOut (fn [e] (reset! hover? false))}
 
            [:div.window-header
-            {:style {:width @window-width
+            ; Make it slightly wider and shift left so that the top is rounded,
+            ; but the bottom is not
+            {:style {:width (+ @window-width 4)
+                     :transform "translateX(-2px)"
                      :height 32
                      :background "linear-gradient(0deg, rgb(41 45 57), rgb(41 45 57 / 95%))"
                      :border-radius 5
@@ -101,19 +108,26 @@
               [:rect {:x "4" :y "9" :width "12" :height "2" :rx "1"}]]]]
 
            (when-not collapsed?
-             [:div.window-content {:style {:padding 15
-                                           :display :block
-                                           :border-radius 5
-                                           :background "#e9eff3"
-                                           :color :black
-                                           :height (- @window-height 32 30)
-                                           :position :relative}}
+             [:div#com-mjdowney-scx-float-results-on-page-window-content.window-content
+              {:style {:padding-left 15
+                       :padding-right 15
+                       :padding-top 0
+                       :padding-bottom 0
+                       :display :block
+                       :border-radius 5
+                       :background "#e9eff3"
+                       :color :black
+                       :overflow-y :auto
+                       :overflow-x :hidden
+                       :overflow-wrap :normal
+                       :height (- @window-height 32)
+                       :position :relative}}
               (when @hover?
                 [:div.window-resize
                  {:style {:display :block
-                          :position :absolute
-                          :bottom 5
-                          :right 5
+                          :position :fixed
+                          :top (+ @window-top @window-height -10)
+                          :left (+ @window-left @window-width -10)
                           :width 8
                           :height 8
                           :cursor :nwse-resize}
@@ -123,7 +137,7 @@
                     (let [dy (- @window-height (.-pageY e))
                           dx (- @window-width (.-pageX e))
                           on-move (fn [event]
-                                    (reset! window-width (max 150 (+ (.-pageX event) dx)))
+                                    (reset! window-width (max 300 (+ (.-pageX event) dx)))
                                     (reset! window-height (max 62 (+ (.-pageY event) dy))))]
                       (js/window.addEventListener "mousemove" on-move)
                       (js/window.addEventListener "mouseup"
@@ -140,11 +154,13 @@
                                 :border-right "1px solid black"
                                 :width "10px"
                                 :height "10px"}}]])
-              [:h3 "SCI eval results:"]
-              (when-let [recent (peek (:msgs @state))]
-                [:<>
-                 [:pre (:in recent)]
-                 [:pre ";=> " (:out recent)]])])])))))
+              (for [[idx {:keys [in out]}] (map-indexed vector (:msgs @state))]
+                [:div {:key idx
+                       :style {#_#_:padding-bottom "0.1em" :display :block}}
+                 [:br]
+                 [:pre in]
+                 [:br]
+                 [:pre ";=> " out]])])])))))
 
 (defn on-message [msg sender respondf]
   (when (= (.-type msg) (str :com.mjdowney.scx.service-worker/msg))
@@ -156,7 +172,11 @@
         (fn [state]
           (-> state
               (assoc :window-state :normal)
-              (update :msgs conj {:in data :out ret})))))))
+              (update :msgs conj {:in data :out ret}))))
+      (js/window.requestAnimationFrame
+        (fn []
+          (let [container (js/document.getElementById "com-mjdowney-scx-float-results-on-page-window-content")]
+            (set! (.-scrollTop container) (.-scrollHeight container))))))))
 
 (defn inject-stylesheet [href]
   (let [link (gdom/createElement "link")]
