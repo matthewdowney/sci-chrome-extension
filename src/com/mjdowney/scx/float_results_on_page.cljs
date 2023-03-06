@@ -29,8 +29,9 @@
                     :top @window-top
                     :left @window-left
                     :position :fixed
-                    :background-color "white"
-                    :border "1px solid black"
+                    :background-color "transparent"
+                    :border-radius 5
+                    :box-shadow "0px 4px 8px rgba(0, 0, 0, 0.4)"
                     :overflow "hidden"
                     :z-index 2147483646}
             :onMouseOver (fn [e] (reset! hover? true))
@@ -39,18 +40,20 @@
            [:div.window-header
             {:style {:width @window-width
                      :height 32
-                     :background-color "black"
-                     :color "white"
+                     :background "linear-gradient(0deg, rgb(41 45 57), rgb(41 45 57 / 95%))"
+                     :border-radius 5
+                     :fill "#8c92a4"
                      :font-family "system-ui"
                      :display "flex"
                      :justify-content "space-between"
                      :align-items "center"}}
 
-            [:div {:style {:top -2
-                           :position :relative
-                           :padding-left 8
-                           :cursor :pointer}
-                   :onClick (fn [e] (swap! state update :window-state {:collapsed :normal :normal :collapsed}))}
+            [:div.taskbar-button
+             {:style {:top -2
+                      :position :relative
+                      :padding-left 8
+                      :cursor :pointer}
+              :onClick (fn [e] (swap! state update :window-state {:collapsed :normal :normal :collapsed}))}
              [:svg {:xmlns "http://www.w3.org/2000/svg"
                     :viewBox "0 0 9 5"
                     :width "12"
@@ -58,30 +61,29 @@
                     :style {:transform (if collapsed?
                                          "rotate(-90deg)"
                                          "rotate(-0deg)")}}
-              [:path {:fill "white"
-                      :d "M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"}]]]
+              [:path {:d "M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"}]]]
 
-            [:div {:style {:top -1
-                           :cursor :move
-                           :position :relative}
-                   :onMouseDown
-                   (fn [e]
-                     (let [dy (- @window-top (.-pageY e))
-                           dx (- @window-left (.-pageX e))
-                           on-move (fn [event]
-                                     (swap! window-top #(max 0 (+ (.-pageY event) dy)))
-                                     (swap! window-left #(max 0 (+ (.-pageX event) dx))))]
-                       (js/window.addEventListener "mousemove" on-move)
-                       (js/window.addEventListener "mouseup"
-                         (fn on-mouse-up [e]
-                           (js/window.removeEventListener "mousemove" on-move)
-                           (js/window.removeEventListener "mouseup" on-mouse-up)))
-                       (.preventDefault e)))}
+            [:div.taskbar-button
+             {:style {:top -1
+                      :cursor :move
+                      :position :relative}
+              :onMouseDown
+              (fn [e]
+                (let [dy (- @window-top (.-pageY e))
+                      dx (- @window-left (.-pageX e))
+                      on-move (fn [event]
+                                (reset! window-top (max 0 (+ (.-pageY event) dy)))
+                                (reset! window-left (max 0 (+ (.-pageX event) dx))))]
+                  (js/window.addEventListener "mousemove" on-move)
+                  (js/window.addEventListener "mouseup"
+                    (fn on-mouse-up [e]
+                      (js/window.removeEventListener "mousemove" on-move)
+                      (js/window.removeEventListener "mouseup" on-mouse-up)))
+                  (.preventDefault e)))}
              [:svg {:width "20"
                     :height "10"
                     :viewBox "0 0 28 14"
-                    :xmlns "http://www.w3.org/2000/svg"
-                    :style {:fill :white}}
+                    :xmlns "http://www.w3.org/2000/svg"}
               [:circle {:cx "2" :cy "2" :r "2"}]
               [:circle {:cx "14" :cy "2" :r "2"}]
               [:circle {:cx "26" :cy "2" :r "2"}]
@@ -89,29 +91,31 @@
               [:circle {:cx "14" :cy "12" :r "2"}]
               [:circle {:cx "26" :cy "12" :r "2"}]]]
 
-            [:div {:style {:position :relative
-                           :padding-right 8
-                           :cursor :pointer
-                           :fill "white"
-                           :top 1}
-                   :onClick (fn [e] (swap! state assoc :window-state :hidden))}
+            [:div.taskbar-button
+             {:style {:position :relative
+                      :padding-right 8
+                      :cursor :pointer
+                      :top 1}
+              :onClick (fn [e] (swap! state assoc :window-state :hidden))}
              [:svg {:width 20 :height 20 :viewBox "0 0 20 20" :fill "white"}
               [:rect {:x "4" :y "9" :width "12" :height "2" :rx "1"}]]]]
 
            (when-not collapsed?
              [:div.window-content {:style {:padding 15
                                            :display :block
+                                           :border-radius 5
+                                           :background "#e9eff3"
+                                           :color :black
                                            :height (- @window-height 32 30)
                                            :position :relative}}
               (when @hover?
                 [:div.window-resize
                  {:style {:display :block
                           :position :absolute
-                          :bottom 3
-                          :right 3
+                          :bottom 5
+                          :right 5
                           :width 8
                           :height 8
-                          #_#_:background-color :lightgray
                           :cursor :nwse-resize}
 
                   :onMouseDown
@@ -120,7 +124,7 @@
                           dx (- @window-width (.-pageX e))
                           on-move (fn [event]
                                     (reset! window-width (max 150 (+ (.-pageX event) dx)))
-                                    (reset! window-height (max 32 (+ (.-pageY event) dy))))]
+                                    (reset! window-height (max 62 (+ (.-pageY event) dy))))]
                       (js/window.addEventListener "mousemove" on-move)
                       (js/window.addEventListener "mouseup"
                         (fn on-mouse-up [e]

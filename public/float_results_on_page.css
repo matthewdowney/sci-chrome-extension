@@ -9,3 +9,11 @@
 {
 	all: unset;
 }
+
+#com\.mjdowney\.scx\.float-results-on-page .taskbar-button {
+	fill: #8c92a4;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page .taskbar-button:hover {
+	fill: #c2cbe7;
+}
