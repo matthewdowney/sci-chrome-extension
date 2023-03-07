@@ -2,6 +2,9 @@
 ;; TODO: Input box within the result box itself, so not all entry has to be via
 ;;       the URL bar
 ;; TODO: Capture stdout too
+;; TODO: Or maybe each thing could spawn its own window? And then further
+;;       manipulation happens via the input bar? That way you could query a
+;;       couple books and line them up however you want.
 (ns com.mjdowney.scx.float-results-on-page
   (:require [clojure.string :as string]
             [com.mjdowney.scx.sci :as sci]
@@ -17,152 +20,126 @@
 (def ^:const app-id "com.mjdowney.scx.float-results-on-page")
 (defonce state (r/atom {:msgs [] :window-state :hidden}))
 
-(defn app []
+(def min-width 300)
+(def min-height 62)
+
+(defn window-drag-handler
+  "Build an onmousedown handler for the window's drag handle that modifies the
+  given atoms to change the window's position."
+  [window-top window-left]
+  (fn [e]
+    ; track the initial offset between the window pos and the cursor
+    (let [dy (- @window-top (.-pageY e))
+          dx (- @window-left (.-pageX e))
+          on-move (fn [event]
+                    ; move the window by the cursor's change + initial offset
+                    (reset! window-top (max 0 (+ (.-pageY event) dy)))
+                    (reset! window-left (max 0 (+ (.-pageX event) dx))))]
+      ; do this in mousemove until the mouse is released
+      (js/window.addEventListener "mousemove" on-move)
+      (js/window.addEventListener "mouseup"
+        (fn on-mouse-up [_e]
+          (js/window.removeEventListener "mousemove" on-move)
+          (js/window.removeEventListener "mouseup" on-mouse-up)))
+      (.preventDefault e))))
+
+(defn window-resize-handle
+  "Build an onmousedown handler for the window's resize handle that modifies the
+  given atoms to change the window's size."
+  [window-width window-height]
+  (fn [e]
+    (let [dy (- @window-height (.-pageY e))
+          dx (- @window-width (.-pageX e))
+          on-move (fn [event]
+                    (reset! window-width (max min-width (+ (.-pageX event) dx)))
+                    (reset! window-height (max min-height (+ (.-pageY event) dy))))]
+      (js/window.addEventListener "mousemove" on-move)
+      (js/window.addEventListener "mouseup"
+        (fn on-mouse-up [_e]
+          (js/window.removeEventListener "mousemove" on-move)
+          (js/window.removeEventListener "mouseup" on-mouse-up)))
+      (.preventDefault e))))
+
+(defn toggle-window-collapse [_e]
+  (swap! state update :window-state {:collapsed :normal :normal :collapsed}))
+
+(defn window-title-bar
+  "A title bar with three evenly spaced buttons, drawn as SVGs, to collapse
+  drag or hide the window."
+  [window-width window-top window-left collapsed?]
+  ; Make it slightly wider and shift left so that the top is rounded,
+  ; but the bottom is not
+  [:div.window-header {:style {:width (+ @window-width 4)}}
+   [:div.taskbar-button {:style {:padding-left 8}
+                         :onClick toggle-window-collapse}
+    [:svg {:xmlns "http://www.w3.org/2000/svg"
+           :viewBox "0 0 9 5"
+           :width "12"
+           :height "8"
+           :style {:transform (if collapsed? "rotate(-90deg)" "rotate(-0deg)")}}
+     [:path {:d "M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"}]]]
+
+   [:div.taskbar-button
+    {:style {:cursor :move}
+     :onMouseDown (window-drag-handler window-top window-left)}
+    [:svg {:width "20"
+           :height "10"
+           :viewBox "0 0 28 14"
+           :xmlns "http://www.w3.org/2000/svg"}
+     [:circle {:cx "2" :cy "2" :r "2"}]
+     [:circle {:cx "14" :cy "2" :r "2"}]
+     [:circle {:cx "26" :cy "2" :r "2"}]
+     [:circle {:cx "2" :cy "12" :r "2"}]
+     [:circle {:cx "14" :cy "12" :r "2"}]
+     [:circle {:cx "26" :cy "12" :r "2"}]]]
+
+   [:div.taskbar-button
+    {:style {:padding-right 8 :top 1}
+     :onClick (fn [_] (swap! state assoc :window-state :hidden))}
+    [:svg {:width 20 :height 20 :viewBox "0 0 20 20" :fill "white"}
+     [:rect {:x "4" :y "9" :width "12" :height "2" :rx "1"}]]]])
+
+(defn window [contents]
   (let [window-width (r/atom 300)
         window-height (r/atom 200)
         window-top (r/atom 25)
         window-left (r/atom 25)
         hover? (r/atom false)]
-    (fn []
-      (let [{:keys [window-state msgs]} @state
+    ; n.b. style is in float_results_on_page.css, *except* for dynamically
+    ; computed styles (like window position)
+    (fn [contents]
+      (let [{:keys [window-state]} @state
             collapsed? (= window-state :collapsed)]
         (when-not (= window-state :hidden)
           [:div.window-container
            {:style {:width @window-width
                     :height (if collapsed? :fit-content @window-height)
                     :top @window-top
-                    :left @window-left
-                    :position :fixed
-                    :background-color "transparent"
-                    :border-radius 5
-                    :box-shadow "0px 4px 8px rgba(0, 0, 0, 0.4)"
-                    :overflow "hidden"
-                    :z-index 2147483646}
-            :onMouseOver (fn [e] (reset! hover? true))
-            :onMouseOut (fn [e] (reset! hover? false))}
+                    :left @window-left}
+            :onMouseOver (fn [_] (reset! hover? true))
+            :onMouseOut (fn [_] (reset! hover? false))}
 
-           [:div.window-header
-            ; Make it slightly wider and shift left so that the top is rounded,
-            ; but the bottom is not
-            {:style {:width (+ @window-width 4)
-                     :transform "translateX(-2px)"
-                     :height 32
-                     :background "linear-gradient(0deg, rgb(41 45 57), rgb(41 45 57 / 95%))"
-                     :border-radius 5
-                     :fill "#8c92a4"
-                     :font-family "system-ui"
-                     :display "flex"
-                     :justify-content "space-between"
-                     :align-items "center"}}
-
-            [:div.taskbar-button
-             {:style {:top -2
-                      :position :relative
-                      :padding-left 8
-                      :cursor :pointer}
-              :onClick (fn [e] (swap! state update :window-state {:collapsed :normal :normal :collapsed}))}
-             [:svg {:xmlns "http://www.w3.org/2000/svg"
-                    :viewBox "0 0 9 5"
-                    :width "12"
-                    :height "8"
-                    :style {:transform (if collapsed?
-                                         "rotate(-90deg)"
-                                         "rotate(-0deg)")}}
-              [:path {:d "M3.8 4.4c.4.3 1 .3 1.4 0L8 1.7A1 1 0 007.4 0H1.6a1 1 0 00-.7 1.7l3 2.7z"}]]]
-
-            [:div.taskbar-button
-             {:style {:top -1
-                      :cursor :move
-                      :position :relative}
-              :onMouseDown
-              (fn [e]
-                (let [dy (- @window-top (.-pageY e))
-                      dx (- @window-left (.-pageX e))
-                      on-move (fn [event]
-                                (reset! window-top (max 0 (+ (.-pageY event) dy)))
-                                (reset! window-left (max 0 (+ (.-pageX event) dx))))]
-                  (js/window.addEventListener "mousemove" on-move)
-                  (js/window.addEventListener "mouseup"
-                    (fn on-mouse-up [e]
-                      (js/window.removeEventListener "mousemove" on-move)
-                      (js/window.removeEventListener "mouseup" on-mouse-up)))
-                  (.preventDefault e)))}
-             [:svg {:width "20"
-                    :height "10"
-                    :viewBox "0 0 28 14"
-                    :xmlns "http://www.w3.org/2000/svg"}
-              [:circle {:cx "2" :cy "2" :r "2"}]
-              [:circle {:cx "14" :cy "2" :r "2"}]
-              [:circle {:cx "26" :cy "2" :r "2"}]
-              [:circle {:cx "2" :cy "12" :r "2"}]
-              [:circle {:cx "14" :cy "12" :r "2"}]
-              [:circle {:cx "26" :cy "12" :r "2"}]]]
-
-            [:div.taskbar-button
-             {:style {:position :relative
-                      :padding-right 8
-                      :cursor :pointer
-                      :top 1}
-              :onClick (fn [e] (swap! state assoc :window-state :hidden))}
-             [:svg {:width 20 :height 20 :viewBox "0 0 20 20" :fill "white"}
-              [:rect {:x "4" :y "9" :width "12" :height "2" :rx "1"}]]]]
+           [window-title-bar window-width window-top window-left collapsed?]
 
            (when-not collapsed?
              [:div#com-mjdowney-scx-float-results-on-page-window-content.window-content
-              {:style {:padding-left 15
-                       :padding-right 15
-                       :padding-top 0
-                       :padding-bottom 0
-                       :display :block
-                       :border-radius 5
-                       :background "#e9eff3"
-                       :color :black
-                       :overflow-y :auto
-                       :overflow-x :hidden
-                       :overflow-wrap :normal
-                       :height (- @window-height 32)
-                       :position :relative}}
+              {:style {:height (- @window-height 32)}}
               (when @hover?
                 [:div.window-resize
-                 {:style {:display :block
-                          :position :fixed
-                          :top (+ @window-top @window-height -10)
-                          :left (+ @window-left @window-width -10)
-                          :width 8
-                          :height 8
-                          :cursor :nwse-resize}
+                 {:style {:top (+ @window-top @window-height -10)
+                          :left (+ @window-left @window-width -10)}
+                  :onMouseDown (window-resize-handle window-width window-height)}
+                 [:div.window-resize-decoration]])
+              contents])])))))
 
-                  :onMouseDown
-                  (fn [e]
-                    (let [dy (- @window-height (.-pageY e))
-                          dx (- @window-width (.-pageX e))
-                          on-move (fn [event]
-                                    (reset! window-width (max 300 (+ (.-pageX event) dx)))
-                                    (reset! window-height (max 62 (+ (.-pageY event) dy))))]
-                      (js/window.addEventListener "mousemove" on-move)
-                      (js/window.addEventListener "mouseup"
-                        (fn on-mouse-up [e]
-                          (js/window.removeEventListener "mousemove" on-move)
-                          (js/window.removeEventListener "mouseup" on-mouse-up)))
-                      (.preventDefault e)))}
+(defn app []
+  [window
+   (for [[idx {:keys [in out]}] (map-indexed vector (:msgs @state))]
+     [:div {:key idx :style {:display :block}}
+      [:br] [:pre in]
+      [:br] [:pre ";=> " out]])])
 
-                 [:div {:style {:position "absolute"
-                                :top "50%"
-                                :left "50%"
-                                :transform "translate(-50%, -50%)"
-                                :border-bottom "1px solid black"
-                                :border-right "1px solid black"
-                                :width "10px"
-                                :height "10px"}}]])
-              (for [[idx {:keys [in out]}] (map-indexed vector (:msgs @state))]
-                [:div {:key idx
-                       :style {#_#_:padding-bottom "0.1em" :display :block}}
-                 [:br]
-                 [:pre in]
-                 [:br]
-                 [:pre ";=> " out]])])])))))
-
-(defn on-message [msg sender respondf]
+(defn on-message [msg _sender _respondf]
   (when (= (.-type msg) (str :com.mjdowney.scx.service-worker/msg))
     (let [data (.-data msg)
           ret (sci/eval-with-sci data)]

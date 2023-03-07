@@ -1,3 +1,10 @@
+/*
+ * Idk why this monstrosity is necessary to get SVGs to display currently.
+ * I assumed it would just be fine to all: unset children of the container so
+ * that the page's style doesn't affect the extension's style (I know, I know,
+ * use iframes -- but I couldn't get the window to drag and resize nicely in an
+ * iframe) but that seems to break the display of SVGs. -\_(ツ)_/-
+ */
 #com\.mjdowney\.scx\.float-results-on-page,
 #com\.mjdowney\.scx\.float-results-on-page :not(svg > *),
 #com\.mjdowney\.scx\.float-results-on-page :not(svg > *) :not(svg > *),
@@ -14,10 +21,66 @@
 	font-family: monospace;
 }
 
+#com\.mjdowney\.scx\.float-results-on-page .window-container {
+	position: fixed;
+	background-color: transparent;
+	border-radius: 5px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+	overflow: hidden;
+	z-index: 2147483646;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page .window-header {
+	/* Make it slightly wider and shift left so that the top is rounded,
+     but the bottom is not */
+	transform: translateX(-2px);
+	height: 32px;
+	background: linear-gradient(0deg, rgb(41 45 57), rgb(41 45 57 / 95%));
+	border-radius: 5px;
+	fill: #8c92a4;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
 #com\.mjdowney\.scx\.float-results-on-page .taskbar-button {
 	fill: #8c92a4;
+	position: relative;
+	top: -2px;
+	cursor: pointer;
 }
 
 #com\.mjdowney\.scx\.float-results-on-page .taskbar-button:hover {
 	fill: #c2cbe7;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page .window-content {
+	padding: 0 15px;
+	display: block;
+	border-radius: 5px;
+	background: #e9eff3;
+	color: black;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overflow-wrap: normal;
+	position: relative;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page .window-resize {
+	display: block;
+	position: fixed;
+	width: 8px;
+	height: 8px;
+	cursor: nwse-resize;
+}
+
+#com\.mjdowney\.scx\.float-results-on-page .window-resize-decoration {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	width: 10px;
+	height: 10px;
 }
