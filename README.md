@@ -4,22 +4,22 @@ A Chrome extension to evaluate code entered into the URL bar
 (the ["omnibox"](https://developer.chrome.com/docs/extensions/reference/omnibox/)) 
 with the [Small Clojure Interpreter (SCI)](https://github.com/babashka/sci).
 
+Status: work in progress, hobby project.
+
+![evaluating code with sci chrome extension](./doc/sci-chrome-extension.gif)
+
+- [x] Evaluate code typed into the URL bar
+- [x] Float a REPL window to evaluate code on the current page
+- [ ] Rendering of non-text results (e.g. react components -- maybe I could do 
+      this via [Scittle](https://github.com/babashka/scittle)?)
+- [ ] Some kind of user.clj file to define helpers. Ideally one could define 
+      helpers to float e.g. order books on the current tab and call them from 
+      the address bar `sci (custom-book-helper :binance/btcusdt)`. 
+
 ## Development
 
-Refer to the `shadow-cljs` documentation.
+Start the shadow-cljs development server with 
 
-Run
+    bb dev
 
-    shadow-cljs watch :app
-
-and then connect to the nREPL port and run
-
-    (shadow/repl :app)
-
-Links for me:
-- https://shadow-cljs.github.io/docs/UsersGuide.html#_cursive
-
-### REPL
-Configure the REPL as such, start a REPL server with `npx shadow-cljs server`,
-and run `(shadow/repl :your-build-id)` inside the IntelliJ REPL.
-![repl config](./doc/repl-conf.png)
+Then load the public/ directory as an unpacked extension in Chrome/Brave.
